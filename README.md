@@ -1,9 +1,15 @@
 # Semantic Segmentation
+[architecture1]: ./images/architecture1.png
+[bike]: ./images/bike.png
+
 ### Introduction
 In this project, I'll label the pixels of a road in images using a [Fully Convolutional Network (FCN)](https://people.eecs.berkeley.edu/~jonlong/long_shelhamer_fcn.pdf). The components of a FCN includes a pretrained neural network (ie. VGG-16) as an encoder and transpose convolution layers as a decoder. The role of the encoder is capturing the features present at different depths (layer 3, 4, 7), while the decoder adds the upsampled (transposed) final layer 7 with the skip connections produced by putting layers 3 and 4 through 1x1 convolutions. Helpful animations of convolutional operations, including transposed convolutions, can be found [here](https://github.com/vdumoulin/conv_arithmetic). The final sum has the same size of the original image and it is used to predict whether each pixel belongs to a labeled class.
 
-[architecture1]: ./images/architecture1.png
-[bike]: ./images/bike.png
+Simplied FCN Structure
+![alt text][architecture1]
+
+With Skip Connections
+![alt text][bike]
 
 Note: There are two options for transfer learning in semantic segmentation, depending on whether the pretrained network parameters are going to be re-trained by the new data. If we want to fix the pretrained network, we need to freeze the backpropagation at all skip connections (layer 3, 4 and 7 of VGG).
 
@@ -22,6 +28,8 @@ Download the [Kitti Road dataset](http://www.cvlibs.net/datasets/kitti/eval_road
 The project labels most pixels of roads close to the best solution. The model doesn't have to predict correctly all the images, just most of them. A solution that is close to best would label at least 80% of the road and label no more than 20% of non-road pixels as road.
 
 ### Implementation
+
+#### Training
 
 The link for the frozen `VGG16` model is hardcoded into `helper.py`.  The model can be found [here](https://s3-us-west-1.amazonaws.com/udacity-selfdrivingcar/vgg.zip). This model is not vanilla `VGG16`, but a fully convolutional version, which already contains the 1x1 convolutions to replace the fully connected layers. I extract them by name.
 
@@ -74,6 +82,36 @@ train_op = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy_loss)
 ```
 
 Yeah, you are good to go with that! Just one more thing, try to limit the batch_size in 5 to 10 images to avoid Out-of-memory error for your graphic card (mine is the humble GTX 1060).
+
+#### Testing
+Here is the part I find it very common but useful: how to save and load the Tensorflow model for scoring purpose. After struggling a while, I figure out the template.
+
+```python
+## Train and save the model
+tf.reset_default_graph()
+sess.run(tf.global_variables_initializer())
+... # create the model, naming all operations you want to extract
+... # logits = tf.reshape(nn_last_layer, (-1, num_classes), name='logits')
+...
+saver = tf.train.Saver()
+...  # train the model
+saver.save(sess, 'segmentation_model')
+
+## Load and score the model
+# load
+saver = tf.train.import_meta_graph('segmentation_model.meta')
+saver.restore(sess,tf.train.latest_checkpoint('./'))
+# extract tensors, including input tensor and hyperparameter tensor.
+graph = tf.get_default_graph()
+input_image = graph.get_tensor_by_name('image_input:0')
+keep_prob = graph.get_tensor_by_name('keep_prob:0')
+logits = graph.get_tensor_by_name('logits:0')  # note that here we call the TENSOR as the result of operation, not the operation itself. Call it by operation_name::x.
+... # load a sample image
+# score
+sess.run([tf.nn.softmax(logits)], {keep_prob: 1.0, input_image: [image]})
+```
+
+In the Jupyter notebook, there is also a code for scoring through frames of a video, overlay the classification and output the video result.
 
 ### Using GitHub and Creating Effective READMEs
 If you are unfamiliar with GitHub , Udacity has a brief [GitHub tutorial](http://blog.udacity.com/2015/06/a-beginners-git-github-tutorial.html) to get you started. Udacity also provides a more detailed free [course on git and GitHub](https://www.udacity.com/course/how-to-use-git-and-github--ud775).
