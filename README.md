@@ -2,6 +2,10 @@
 [architecture1]: ./images/architecture1.png
 [bike]: ./images/bike.png
 [VGGfreeze]: ./images/VGGfreeze.png
+[um_000003_0]: ./images/um_000003_0.png
+[um_000003_1]: ./images/um_000003_1.png
+[um_000003_2]: ./images/um_000003_2.png
+
 
 ### Introduction
 In this project, I'll label the pixels of a road in images using a [Fully Convolutional Network (FCN)](https://people.eecs.berkeley.edu/~jonlong/long_shelhamer_fcn.pdf). The components of a FCN includes a pretrained neural network (ie. VGG-16) as an encoder and transpose convolution layers as a decoder. The role of the encoder is capturing the features present at different depths (layer 3, 4, 7), while the decoder adds the upsampled (transposed) final layer 7 with the skip connections produced by putting layers 3 and 4 through 1x1 convolutions. Helpful animations of convolutional operations, including transposed convolutions, can be found [here](https://github.com/vdumoulin/conv_arithmetic). The final sum has the same size of the original image and it is used to predict whether each pixel belongs to a labeled class.
@@ -132,10 +136,15 @@ What I found interesting with the limited time is the difference in fixing the p
 
 ![alt text][VGGfreeze]
 
-Both the networks can classify the images at the rate 4.5 frame/s, which is ok but not at 24 frame/s though :P.
+Both the networks can classify the images at the rate 4.5 frame/s, which is ok but not at 24 frame/s though :P. Here is the classification result from the unfixed FCN, step-by-step during fine-tuning.
+
+Original
+![alt text][um_000003_0]
+After skip connection
+![alt text][um_000003_1]
+After l2 regularization
+![alt text][um_000003_2]
 
 ### Next
 
 If having more time I will try to implement on other class detection (pedestrian, bicycle, sign board, ...). Also try to achirve the test result at every epoch to improve the prediction accuracy in test.
-
-### Using GitHub and Creating Effective READMEs
