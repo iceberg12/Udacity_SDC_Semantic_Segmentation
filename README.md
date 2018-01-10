@@ -123,10 +123,9 @@ sess.run([tf.nn.softmax(logits)], {keep_prob: 1.0, input_image: [image]})
 
 In the Jupyter notebook, there is also a code for scoring through frames of a video, overlay the classification and output the video result.
 
-### Result
-My model can achieve 0.7 on the training set. Test result can be found in the /runs. folder. 
+### Dead or Alive?
 
-That aside, what I found interesting with the limited time is the difference in fixing the pretrained VGG or not. It is not a Dead or Alive question. Here is the findings
+What I found interesting with the limited time is the difference in fixing the pretrained VGG or not. It is not a  question. Here is the findings
 
 - Fixing the pretrained VGG really boosts up the training time, reducing from 33s per epoch to 10s per epoch.
 - However, the training error comes down slower. This is explanable since the network is too frigid to tune, but it might become better will more epochs.
@@ -140,8 +139,3 @@ Both the networks can classify the images at the rate 4.5 frame/s, which is ok b
 If having more time I will try to implement on other class detection (pedestrian, bicycle, sign board, ...). Also try to achirve the test result at every epoch to improve the prediction accuracy in test.
 
 ### Using GitHub and Creating Effective READMEs
-If you are unfamiliar with GitHub , Udacity has a brief [GitHub tutorial](http://blog.udacity.com/2015/06/a-beginners-git-github-tutorial.html) to get you started. Udacity also provides a more detailed free [course on git and GitHub](https://www.udacity.com/course/how-to-use-git-and-github--ud775).
-
-To learn about REAMDE files and Markdown, Udacity provides a free [course on READMEs](https://www.udacity.com/courses/ud777), as well. 
-
-GitHub also provides a [tutorial](https://guides.github.com/features/mastering-markdown/) about creating Markdown files.
