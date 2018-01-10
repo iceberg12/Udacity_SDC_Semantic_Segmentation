@@ -1,6 +1,7 @@
 # Semantic Segmentation
 [architecture1]: ./images/architecture1.png
 [bike]: ./images/bike.png
+[VGGfreeze]: ./images/VGGfreeze.png
 
 ### Introduction
 In this project, I'll label the pixels of a road in images using a [Fully Convolutional Network (FCN)](https://people.eecs.berkeley.edu/~jonlong/long_shelhamer_fcn.pdf). The components of a FCN includes a pretrained neural network (ie. VGG-16) as an encoder and transpose convolution layers as a decoder. The role of the encoder is capturing the features present at different depths (layer 3, 4, 7), while the decoder adds the upsampled (transposed) final layer 7 with the skip connections produced by putting layers 3 and 4 through 1x1 convolutions. Helpful animations of convolutional operations, including transposed convolutions, can be found [here](https://github.com/vdumoulin/conv_arithmetic). The final sum has the same size of the original image and it is used to predict whether each pixel belongs to a labeled class.
@@ -84,7 +85,16 @@ train_op = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy_loss)
 Yeah, you are good to go with that! Just one more thing, try to limit the batch_size in 5 to 10 images to avoid Out-of-memory error for your graphic card (mine is the humble GTX 1060).
 
 #### Testing
-Here is the part I find it very common but useful: how to save and load the Tensorflow model for scoring purpose. After struggling a while, I figure out the template.
+
+Note that fixing the pretrained network can be done by stopping the gradient flows.
+
+```python
+vgg_layer7_out = tf.stop_gradient(vgg_layer7_out)
+vgg_layer4_out = tf.stop_gradient(vgg_layer4_out)
+vgg_layer3_out = tf.stop_gradient(vgg_layer3_out)
+```
+
+In addition, here is the part I find it very common but useful: how to save and load the Tensorflow model for scoring purpose. After struggling a while, I figure out the template.
 
 ```python
 ## Train and save the model
@@ -112,6 +122,22 @@ sess.run([tf.nn.softmax(logits)], {keep_prob: 1.0, input_image: [image]})
 ```
 
 In the Jupyter notebook, there is also a code for scoring through frames of a video, overlay the classification and output the video result.
+
+### Result
+My model can achieve 0.7 on the training set. Test result can be found in the /runs. folder. 
+
+That aside, what I found interesting with the limited time is the difference in fixing the pretrained VGG or not. It is not a Dead or Alive question. Here is the findings
+
+- Fixing the pretrained VGG really boosts up the training time, reducing from 33s per epoch to 10s per epoch.
+- However, the training error comes down slower. This is explanable since the network is too frigid to tune, but it might become better will more epochs.
+
+![alt text][VGGfreeze]
+
+Both the networks can classify the images at the rate 4.5 frame/s, which is ok but not at 24 frame/s though :P.
+
+### Next
+
+If having more time I will try to implement on other class detection (pedestrian, bicycle, sign board, ...). Also try to achirve the test result at every epoch to improve the prediction accuracy in test.
 
 ### Using GitHub and Creating Effective READMEs
 If you are unfamiliar with GitHub , Udacity has a brief [GitHub tutorial](http://blog.udacity.com/2015/06/a-beginners-git-github-tutorial.html) to get you started. Udacity also provides a more detailed free [course on git and GitHub](https://www.udacity.com/course/how-to-use-git-and-github--ud775).
