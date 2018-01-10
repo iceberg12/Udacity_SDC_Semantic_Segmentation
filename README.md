@@ -26,15 +26,15 @@ The project labels most pixels of roads close to the best solution. The model do
 The link for the frozen `VGG16` model is hardcoded into `helper.py`.  The model can be found [here](https://s3-us-west-1.amazonaws.com/udacity-selfdrivingcar/vgg.zip). This model is not vanilla `VGG16`, but a fully convolutional version, which already contains the 1x1 convolutions to replace the fully connected layers. I extract them by name.
 
 ```python
-    tf.saved_model.loader.load(sess, ['vgg16'], vgg_path)
-    graph = tf.get_default_graph()
+tf.saved_model.loader.load(sess, ['vgg16'], vgg_path)
+graph = tf.get_default_graph()
     
-    # get the layers of vgg to use in Fully Convolutional Network FCN-8s
-    input_ = graph.get_tensor_by_name('image_input:0')
-    keep_prob = graph.get_tensor_by_name('keep_prob:0')
-    layer3 = graph.get_tensor_by_name('layer3_out:0')
-    layer4 = graph.get_tensor_by_name('layer4_out:0')
-    layer7 = graph.get_tensor_by_name('layer7_out:0')
+# get the layers of vgg to use in Fully Convolutional Network FCN-8s
+input_ = graph.get_tensor_by_name('image_input:0')
+keep_prob = graph.get_tensor_by_name('keep_prob:0')
+layer3 = graph.get_tensor_by_name('layer3_out:0')
+layer4 = graph.get_tensor_by_name('layer4_out:0')
+layer7 = graph.get_tensor_by_name('layer7_out:0')
 ```
 
 The original FCN-8s was trained in stages. The authors later uploaded a version that was trained all at once to their GitHub repo.  The version in the GitHub repo has one important difference: The outputs of pooling layers 3 and 4 are scaled before they are fed into the 1x1 convolutions.  As a result, the model learns much better with the scaling layers included. The model may not converge substantially faster, but may reach a higher IoU and accuracy. 
@@ -44,8 +44,37 @@ layer_3 = tf.multiply(layer_3, 0.0001)
 layer_4 = tf.multiply(layer_4, 0.01)
 ```    
 
-When adding l2-regularization, setting a regularizer in the arguments of the `tf.layers` is not enough. Regularization loss terms must be manually added to your loss function. otherwise regularization is not implemented.
- 
+Now come the interesting part of convolution layer 1x1. I want to set L2 regularizer for the weights in each of these layers, with the weights are initialized in an educated manner (truncated_normal, with std 0.01 to avoid large values which cause exploding later). We have
+
+```python
+layer_4 = tf.layers.conv2d(vgg_layer7_out, num_classes, kernel_size=1, padding='same',
+    kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3),
+    kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
+```
+
+and add it to the **transposed** (or upsampled) of layer 7.
+
+```python
+decoding_layer_1 = tf.layers.conv2d_transpose(layer_7, num_classes, 
+    kernel_size=4, strides=2, padding='same', 
+    kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3),
+    kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
+decoding_layer_1 = tf.add(decoding_layer_1, layer_4)
+```
+
+Note, setting a regularizer in the arguments of the `tf.layers` is not enough. Regularization loss terms must be manually added to your loss function. otherwise regularization is not implemented.
+
+```python
+regularization_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+regularization_loss = sum(regularization_losses)
+...
+cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels))    
+cross_entropy_loss = tf.add(cross_entropy_loss, regularization_loss)
+train_op = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy_loss)
+```
+
+Yeah, you are good to go with that! Just one more thing, try to limit the batch_size in 5 to 10 images to avoid Out-of-memory error for your graphic card (mine is the humble GTX 1060).
+
 ### Using GitHub and Creating Effective READMEs
 If you are unfamiliar with GitHub , Udacity has a brief [GitHub tutorial](http://blog.udacity.com/2015/06/a-beginners-git-github-tutorial.html) to get you started. Udacity also provides a more detailed free [course on git and GitHub](https://www.udacity.com/course/how-to-use-git-and-github--ud775).
 
