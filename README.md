@@ -139,10 +139,15 @@ What I found interesting with the limited time is the difference in fixing the p
 Both the networks can classify the images at the rate 4.5 frame/s, which is ok but not at 24 frame/s though :P. Here is the classification result from the unfixed FCN, step-by-step during fine-tuning.
 
 Original
+
 ![alt text][um_000003_0]
+
 After skip connection
+
 ![alt text][um_000003_1]
+
 After l2 regularization
+
 ![alt text][um_000003_2]
 
 ### Next
