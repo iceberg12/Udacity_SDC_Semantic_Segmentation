@@ -142,11 +142,11 @@ Original
 
 ![alt text][um_000003_0]
 
-After skip connection
+After l2 regularization
 
 ![alt text][um_000003_1]
 
-After l2 regularization
+After skip connection
 
 ![alt text][um_000003_2]
 
