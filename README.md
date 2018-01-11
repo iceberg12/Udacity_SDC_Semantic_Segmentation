@@ -152,4 +152,4 @@ After l2 regularization
 
 ### Next
 
-If having more time I will try to implement on other class detection (pedestrian, bicycle, sign board, ...). Also try to achirve the test result at every epoch to improve the prediction accuracy in test.
+If having more time I will try to implement on other class detection (pedestrian, bicycle, sign board, ...). Also try to archive the test result at every epoch to improve the prediction accuracy in test.
